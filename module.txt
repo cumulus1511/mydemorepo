@@ -1,0 +1,74 @@
+labsuser@master:~/tera$ ls
+ec2-instance  main.tf  terraform.tfstate  terraform.tfstate.backup
+
+labsuser@master:~/tera$ cat main.tf 
+provider "aws" {
+    region = "us-east-1"
+}
+
+module "ec2-instance" {
+    source = "./ec2-instance"
+    ami_id = "ami-096fda3c22c1c990a"
+    instance_type = "t2.micro"gn 
+    vpc_id = "vpc-03a65b236f30221e1"
+# copy vpc id from the console if required
+    port = "22"
+    cidr_block = "0.0.0.0/0"
+}
+
+ec2-istance is our module name 
+
+labsuser@master:~/tera$ cat ec2-instance/main.tf 
+resource "aws_security_group" "mysg" {
+    name = "allow-ssh"
+    description = "Allow ssh traffic"
+    vpc_id = "${var.vpc_id}"
+
+    ingress {
+        description = "Allow inbound ssh traffic"
+        from_port = var.port
+        to_port = var.port
+        protocol = "tcp"
+        cidr_blocks = [var.cidr_block]
+    }
+
+    tags = {
+        name = "allow_ssh"
+    }
+}
+resource "aws_instance" "ec2-instance" {
+    ami = "${var.ami_id}"
+    instance_type = "${var.instance_type}"
+    vpc_security_group_ids = [aws_security_group.mysg.id]
+}
+
+
+labsuser@master:~/tera$ cat ec2-instance/aws.tf 
+# Provider aws is needed to launch ec2 instance on aws
+# Add access key and secret key with token (if needed) to access your aws account
+provider "aws" {
+  region        = "us-east-1"
+  access_key    = ""
+  secret_key    = ""
+  token         = ""
+}
+
+We will be passing the value for these variable while calling the module so we dont need anything in the above variable.tf file 
+
+labsuser@master:~/tera$ cat ec2-instance/variables.tf 
+variable "ami_id" {
+}
+
+variable "instance_type" {
+}
+
+variable "vpc_id" {
+}
+
+variable "port" {
+}
+
+variable "cidr_block" {
+}
+
+labsuser@master:~/tera$ 
